@@ -6,7 +6,7 @@ jobs:
   fast_finish: true
 
   include:
-    - name: "py36-djan	go-21"
+    - name: "py36-django-21"
       python: "3.6"
       env:
         - DJANGO=2.1
