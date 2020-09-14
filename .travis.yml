@@ -2,22 +2,71 @@
 
 language: python
 
-python:
-  - "3.6"
-
-env: 
-  - TOX_ENV=py37-django-21
-  - TOX_ENV=py36-django-21
-  - TOX_ENV=py35-django-21
-
-matrix:
+jobs:
   fast_finish: true
 
+  include:
+    - name: "py36-djan	go-21"
+      python: "3.6"
+      env:
+        - DJANGO=2.1
+        - TOXENV=py36-django-21
+
+    - name: "py36-django-22"
+      python: "3.6"
+      env:
+        - DJANGO=2.2
+        - TOXENV=py36-django-22
+
+    - name: "py36-django-30"
+      python: "3.6"
+      env:
+        - DJANGO=3.0
+        - TOXENV=py36-django-30
+
+    - name: "py37-django-21"
+      python: "3.7"
+      env:
+        - DJANGO=2.1
+        - TOXENV=py37-django-21
+
+    - name: "py37-django-22"
+      python: "3.7"
+      env:
+        - DJANGO=2.2
+        - TOXENV=py37-django-22
+
+    - name: "py37-django-30"
+      python: "3.7"
+      env:
+        - DJANGO=3.0
+        - TOXENV=py37-django-30
+
+    - name: "py38-django-21"
+      python: "3.8"
+      env:
+        - DJANGO=2.1
+	- TOXENV=py38-django-21
+
+    - name: "py38-django-22"
+      python: "3.8"
+      env:
+        - DJANGO=2.2
+        - TOXENV=py38-django-22
+
+    - name: "py38-django-30"
+      python: "3.8"
+      env:
+        - DJANGO=3.0
+	- TOXENV=py38-django-30
+
 # command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
-install: pip install -r requirements_test.txt
+install:
+  - pip install -r requirements_test.txt
+  - pip install Django==$DJANGO
 
 # command to run tests using coverage, e.g. python setup.py test
-script: tox -e $TOX_ENV
+script: tox -e $TOXENV
 
 after_success:
-  - codecov -e TOX_ENV
+  - codecov -e TOXENV
