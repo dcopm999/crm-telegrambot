@@ -31,7 +31,7 @@ Add it to your `INSTALLED_APPS`:
 
     INSTALLED_APPS = (
         ...
-        'telegrambot.apps.TelegrambotConfig',
+        'telegrambot',
         ...
     )
 
@@ -44,7 +44,7 @@ Add vacancy-telegrambot's URL patterns:
 
     urlpatterns = [
         ...
-        url(r'^', include(telegrambot_urls)),
+        path('tg/', include(telegrambot_urls)),
         ...
     ]
 
