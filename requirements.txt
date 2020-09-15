@@ -1,2 +1,4 @@
 
 # Additional requirements go here
+channels>=2.4.0
+pyTelegramBotAPI==3.7.3
