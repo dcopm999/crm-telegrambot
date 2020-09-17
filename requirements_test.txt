@@ -4,5 +4,7 @@ flake8>=2.1.0
 tox>=1.7.0
 codecov>=2.0.0
 
+# pylint
+pylint==2.6.0
+pylint-django==2.3.0
 
-# Additional test requirements go here
