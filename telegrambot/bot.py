@@ -6,12 +6,25 @@ logger = logging.getLogger(__name__)
 
 
 class TelegramBot:
-    def __init__(self, *args, **kwargs):
+    def __new__(cls):
+        if not hasattr(cls, 'instance'):
+            cls.instance = super(TelegramBot, cls).__new__(cls)
+        return cls.instance
+
+    def __init__(self):
         self.TOKEN = settings.TELEGRAM_TOKEN
         self.bot = TeleBot(self.TOKEN)
-        self.webhook_url = f'https://{settings.TELEGRAM_WEBHOOK_HOST}{settings.TELEGRAM_WEBHOOK_PATH}:443'
-        self.bot.set_webhook(url=self.webhook_url)
-        super(TelegramBot, self).__init__(*args, **kwargs)
+        self.WEBHOOK_URL = f'https://{settings.TELEGRAM_WEBHOOK_HOST}{settings.TELEGRAM_WEBHOOK_PATH}'
+        logger.debug('%s: __init__()', self.__class__)
 
-    def __del__(self):
-        self.bot.remove_webhook()
+    def send_message(self, chat_id:int, text:str):
+        self.bot.send_message(chat_id, text)
+        logger.debug('%s: send_message(%i, %s)' % (self.__class__, chat_id, text))
+
+    def set_webhook(self):
+        logger.debug('%s: set_hook() %s' % (self.__class__, self.WEBHOOK_URL))
+        return self.bot.set_webhook(url=self.WEBHOOK_URL)
+
+    def remove_webhook(self):
+        logger.debug('%s: remove_webhook()', self.__class__)
+        return self.bot.remove_webhook()
