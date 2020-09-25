@@ -2,8 +2,7 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Any, Optional
 from telegrambot.bot import TelegramBot
-from telegrambot.mixins import HistoryMixin
-from telegrambot import models
+from telegrambot.mixins import HistoryMixin, CatalogMixin
 
 logger = logging.getLogger(__name__)
 
@@ -73,6 +72,13 @@ class HandlerCommandBase(HistoryMixin, AbstractHandler):
 class HandlerCommandStart(HandlerCommandBase):
     command = '/start'
 
+    def run(self, request):
+        logger.debug('%s: run()', self.__class__)
+        chat_id = request.get('message').get('chat').get('id')
+        keyboard = self.bot.get_kb_catalog()
+        self.bot.send_message(chat_id, 'Catalog', reply_markup=keyboard)
+        super(HandlerCommandBase, self).run(request)
+
     def get_result(self):
         return 'started'
 
@@ -82,3 +88,23 @@ class HandlerCommandHelp(HandlerCommandBase):
 
     def get_result(self):
         return 'helped'
+
+
+class HandlerProductList(CatalogMixin, HandlerCommandBase):
+    command = '__all__'
+
+    def __init_(self):
+        super(HandlerProductList, self).__init__()
+
+    def run(self, request):
+        chat_id = request.get('message').get('chat').get('id')
+        category = request.get('message').get('text')
+        products = self.get_product_by_categoty(category)
+        if products is None:
+            pass
+        else:
+            for product in products:
+                self.bot.send_photo(chat_id, product.image.path, product.caption)
+
+    def get_result(self):
+        return None

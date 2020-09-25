@@ -1,17 +1,22 @@
 import logging
-from telegrambot import models
+from django.conf import settings
+
+from telegrambot import models as telegrambot_models
+from products import models as products_models
 
 logger = logging.getLogger(__name__)
 
 
 class HistoryMixin:
-    subscriber_model = models.Subscriber
-    request_model = models.Request
-    response_model = models.Response
-    dialog_model = models.Dialog
+    subscriber_model = telegrambot_models.Subscriber
+    request_model = telegrambot_models.Request
+    response_model = telegrambot_models.Response
+    dialog_model = telegrambot_models.Dialog
 
     def run(self, request):
         logger.debug('%s: run()', self.__class__)
+        self.chat_id = request.get('message').get('from').get('id')
+        self.message_from = request.get('message').get('from')
         text_request = request.get('message').get('text')
         text_response = self.get_result()
         subscriber_query = self.subscriber_add(request)
@@ -20,11 +25,16 @@ class HistoryMixin:
         self.dialog_add(subscriber_query, request_query, response_query)
 
     def subscriber_add(self, request):
-        subscriber, result =  self.subscriber_model.objects.update_or_create(**request.get('message').get('from'))
-        if result:
-            logger.debug('%s: run() Subscriber %s created' % (self.__class__, subscriber))
+        try:
+            subscriber = self.subscriber_model.objects.get(id=self.chat_id)
+        except self.subscriber_model.DoesNotExist as msg:
+            logger.exception(msg)
+            subscriber = self.subscriber_model(**self.message_from)
+            subscriber.save()
+            logger.debug(f'{self.__class__}: Created new subscriber {subscriber}')
         else:
-            logger.debug('%s: run() Subscriber %s updated' % (self.__class__, subscriber))
+            self.subscriber_model.objects.select_for_update().filter(id=self.chat_id).update(**self.message_from)
+            logger.debug(f'{self.__class__}: Updated subscriber {subscriber}')
         return subscriber
 
     def request_add(self, subscriber_query, text_request):
@@ -35,3 +45,18 @@ class HistoryMixin:
 
     def dialog_add(self, subscriber_query, request_query, response_query):
         return self.dialog_model.objects.create(subscriber=subscriber_query, request=request_query, response=response_query)
+
+
+class CatalogMixin:
+    def __init__(self):
+        self.catalog_model = products_models.Catalog
+        super(CatalogMixin, self).__init__()
+
+    def get_product_by_categoty(self, category: str):
+        try:
+            products = self.catalog_model.objects.get(name=category).product_set.all()
+        except self.catalog_model.DoesNotExist as msg:
+            logger.exception(msg)
+            products = None
+        return products
+

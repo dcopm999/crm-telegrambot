@@ -8,6 +8,7 @@ class Subscriber(models.Model):
     id = models.PositiveIntegerField(primary_key=True, verbose_name=_('Subscriber ID'))
     is_bot = models.BooleanField(verbose_name=_('Is bot'))
     first_name = models.CharField(max_length=250, verbose_name=_('First name'))
+    username = models.CharField(max_length=250, blank=True, verbose_name=_('User name'))
     language_code = models.CharField(max_length=7, choices=settings.LANGUAGES, verbose_name=_('Language code'))
     created = models.DateTimeField(auto_now_add=True, editable=False)
     edited = models.DateTimeField(auto_now=True, editable=False)
@@ -61,3 +62,4 @@ class Dialog(models.Model):
     class Meta:
         verbose_name = _('Dialog')
         verbose_name_plural = _('Dialogs')
+        ordering = ['-created']

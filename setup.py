@@ -46,13 +46,13 @@ history = open('HISTORY.rst').read().replace('.. :changelog:', '')
 requirements = open('requirements.txt').readlines()
 
 setup(
-    name='vacancy-telegrambot',
+    name='crm-telegrambot',
     version=version,
     description="""TelegramBot App""",
     long_description=readme + '\n\n' + history,
     author='Pavel Tanchev',
     author_email='dcopm999@gmail.com',
-    url='https://github.com/dcopm999/vacancy-telegrambot',
+    url='https://github.com/dcopm999/crm-telegrambot',
     packages=[
         'telegrambot',
     ],
@@ -60,7 +60,7 @@ setup(
     install_requires=requirements,
     license="MIT",
     zip_safe=False,
-    keywords='vacancy-telegrambot',
+    keywords='crm-telegrambot',
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Framework :: Django :: 2.1',
