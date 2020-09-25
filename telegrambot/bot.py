@@ -1,6 +1,10 @@
 import logging
-from telebot import TeleBot, types
+from telebot import TeleBot, types, apihelper
+#telebot.apihelper.ApiTelegramException
 from django.conf import settings
+
+from telegrambot import models as telegrambot_models
+from products import models as product_models
 
 logger = logging.getLogger(__name__)
 
@@ -18,8 +22,17 @@ class TelegramBot:
         logger.debug('%s: __init__()', self.__class__)
 
     def send_message(self, chat_id:int, text:str, reply_markup=None):
-        self.bot.send_message(chat_id, text, reply_markup)
+        try:
+            self.bot.send_message(chat_id, text, reply_markup=reply_markup)
+        except apihelper.ApiTelegramException as msg:
+            logger.exception(msg)
         logger.debug(f'{self.__class__}: send_message({chat_id}, {text})')
+
+    def send_photo(self, chat_id: str, photo_path: str, caption=None):
+        with open(photo_path, 'rb') as photo_file:
+            photo = photo_file.read()
+        self.bot.send_photo(chat_id, photo=photo, caption=caption)
+        logger.debug(f'{self.__class__}: send_photo({chat_id}, {photo_path})')
 
     def set_webhook(self):
         logger.debug('%s: set_hook() %s' % (self.__class__, self.WEBHOOK_URL))
@@ -35,3 +48,10 @@ class TelegramBot:
         button_geo = types.KeyboardButton(text="Отправить местоположение", request_location=True)
         keyboard.add(button_phone, button_geo)
         return keyboard
+
+    def get_kb_catalog(self):
+        keyboard = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
+        buttons = [types.KeyboardButton(text=item.name) for item in product_models.Catalog.objects.all()]
+        keyboard.add(*buttons)
+        return keyboard
+

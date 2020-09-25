@@ -4,13 +4,13 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 
-from telegrambot.handlers import HandlerCommandHelp, HandlerCommandStart
+from telegrambot.handlers import HandlerCommandHelp, HandlerCommandStart, HandlerProductList
 
 
 @method_decorator(csrf_exempt, name='dispatch')
 class WebhookView(View):
     http_method_names = ['post']
-    handlers = [HandlerCommandHelp, HandlerCommandStart]
+    handlers = [HandlerCommandHelp, HandlerCommandStart, HandlerProductList]
 
     def post(self, request, *args, **kwargs):
         if request.method == 'POST':
