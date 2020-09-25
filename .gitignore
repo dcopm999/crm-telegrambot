@@ -3,6 +3,10 @@ __pycache__
 .python-version
 *[~#]
 
+# Migrations
+**/migrations/**
+**/migrations/__init__.py
+
 # C extensions
 *.so
 
