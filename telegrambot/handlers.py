@@ -1,8 +1,9 @@
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Optional, List
-
+from typing import Any, Optional
 from telegrambot.bot import TelegramBot
+from telegrambot.mixins import HistoryMixin
+from telegrambot import models
 
 logger = logging.getLogger(__name__)
 
@@ -49,34 +50,35 @@ class AbstractHandler(Handler):
         return None
 
 
-class HandlerCommandBase(AbstractHandler):
-    command: List[Handler]
+class HandlerCommandBase(HistoryMixin, AbstractHandler):
+    command: str
 
     def handle(self, request: Any) -> str:
         logger.debug('%s: handle()', self.__class__)
-        print(request)
-        if request.get('message').get('text') == self.command:
+        if request.get('message').get('text') == self.command or self.command == '__all__':
             self.run(request)
-        else:
-            super().handle(request)
+        super().handle(request)
+
+    def run(self, request):
+        logger.debug('%s: run()', self.__class__)
+        chat_id = request.get('message').get('chat').get('id')
+        self.bot.send_message(chat_id, self.get_result())
+        super(HandlerCommandBase, self).run(request)
 
     @abstractmethod
-    def run(self, request: Any):
-        logger.debug('%s: run()', self.__class__)
-        self.bot.send_message(request.get('message').get('chat').get('id'), 'started')
+    def get_result(self):
+        return None
 
 
 class HandlerCommandStart(HandlerCommandBase):
-    command: List[Handler] = '/start'
+    command = '/start'
 
-    def run(self, request: Any):
-        logger.debug('%s: run()', self.__class__)
-        self.bot.send_message(request.get('message').get('chat').get('id'), 'started')
+    def get_result(self):
+        return 'started'
 
 
 class HandlerCommandHelp(HandlerCommandBase):
     command = '/help'
 
-    def run(self, request: Any):
-        logger.debug('%s: run()', self.__class__)
-        self.bot.send_message(request.get('message').get('chat').get('id'), 'Helped')
+    def get_result(self):
+        return 'helped'
