@@ -49,34 +49,32 @@ class AbstractHandler(Handler):
         return None
 
 
-class HandlerCommandBase(HistoryMixin, AbstractHandler):
+class HandlerCommandBase(AbstractHandler):
     command: str
 
     def handle(self, request: Any) -> str:
         logger.debug('%s: handle()', self.__class__)
-        if request.get('message').get('text') == self.command or self.command == '__all__':
+        if request.get('callback_query', False) or request.get('message').get('text') == self.command or self.command == '__all__':
             self.run(request)
         super().handle(request)
 
     def run(self, request):
-        logger.debug('%s: run()', self.__class__)
-        chat_id = request.get('message').get('chat').get('id')
-        self.bot.send_message(chat_id, self.get_result())
-        super(HandlerCommandBase, self).run(request)
+        return None
 
     def get_result(self):
         return None
 
 
-class HandlerCommandStart(HandlerCommandBase):
+class HandlerCommandStart(HistoryMixin, HandlerCommandBase):
     command = '/start'
 
     def run(self, request):
         logger.debug('%s: run()', self.__class__)
-        chat_id = request.get('message').get('chat').get('id')
-        keyboard = self.bot.get_kb_catalog()
-        self.bot.send_message(chat_id, 'Catalog', reply_markup=keyboard)
-        super(HandlerCommandBase, self).run(request)
+        if request.get('message'):
+            chat_id = request.get('message').get('chat').get('id')
+            keyboard = self.bot.get_kb_catalog()
+            self.bot.send_message(chat_id, 'Catalog', reply_markup=keyboard)
+        super(HandlerCommandStart, self).run(request)
 
     def get_result(self):
         return 'started'
@@ -92,15 +90,24 @@ class HandlerCommandHelp(HandlerCommandBase):
 class HandlerProductList(CatalogMixin, HandlerCommandBase):
     command = '__all__'
 
-    def __init_(self):
-        super(HandlerProductList, self).__init__()
+    def run(self, request):
+        if request.get('message'):
+            chat_id = request.get('message').get('chat').get('id')
+            category = request.get('message').get('text')
+            products = self.get_product_by_categoty(category)
+            if products is None:
+                pass
+            else:
+                for product in products:
+                    buy_btn = self.bot.get_kb_inline_buy(product)
+                    self.bot.send_photo(chat_id, product.image.path, product.caption, buy_btn)
+
+
+class HandlerProductOrder(CatalogMixin, HandlerCommandBase):
+    command = '__all__'
 
     def run(self, request):
-        chat_id = request.get('message').get('chat').get('id')
-        category = request.get('message').get('text')
-        products = self.get_product_by_categoty(category)
-        if products is None:
-            pass
-        else:
-            for product in products:
-                self.bot.send_photo(chat_id, product.image.path, product.caption)
+        if request.get('callback_query'):
+            chat_id = request.get('callback_query').get('message').get('chat').get('id')
+            product_id = request.get('callback_query').get('data')
+            self.set_product_order(chat_id=chat_id, product_id=product_id)

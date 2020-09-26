@@ -1,5 +1,4 @@
 import logging
-from django.conf import settings
 from django.contrib.auth import get_user_model
 
 from telegrambot import models as telegrambot_models
@@ -18,9 +17,15 @@ class HistoryMixin:
 
     def run(self, request):
         logger.debug('%s: run()', self.__class__)
-        self.chat_id = request.get('message').get('from').get('id')
-        self.message_from = request.get('message').get('from')
-        text_request = request.get('message').get('text')
+        if request.get('message', False):
+            logger.debug(f'{self.__class__}: is_message')
+            self.chat_id = request.get('message').get('from').get('id')
+            self.message_from = request.get('message').get('from')
+            text_request = request.get('message').get('text')
+        elif request.get('callback_query', False):
+            self.chat_id = request.get('callback_query').get('message').get('chat').get('id')
+            self.message_from = request.get('callback_query').get('from')
+            text_request = request.get('callback_query').get('message').get('caption')
         text_response = self.get_result()
         subscriber_query = self.subscriber_add(request)
         request_query = self.request_add(subscriber_query, text_request)
@@ -28,17 +33,22 @@ class HistoryMixin:
         self.dialog_add(subscriber_query, request_query, response_query)
 
     def subscriber_add(self, request):
+        logger.debug(f'{self.__class__}: subscriber_add()')
+        username = self.message_from.get('username', f'telegram_{self.chat_id}')
+        self.message_from['username'] = username
+        if 'id' in self.message_from.keys():
+            self.message_from.pop('id')
+
         try:
-            username = self.message_from.get('username', f'telegram_{self.chat_id}')
             subscriber = self.subscriber_model.objects.get(telegram_id=self.chat_id)
-        except self.subscriber_model.DoesNotExist as msg:
-            logger.exception(msg)
-            subscriber = self.subscriber_model(**self.message_from, username=username, telegram_id=self.chat_id)
+        except self.subscriber_model.DoesNotExist:
+            logger.debug(f'User create: telegram_id={self.chat_id} message_from={self.message_from}')
+            subscriber = self.subscriber_model(telegram_id=self.chat_id, **self.message_from)
             subscriber.save()
             logger.debug(f'{self.__class__}: Created new subscriber {subscriber}')
         else:
-            self.subscriber_model.objects.select_for_update().filter(id=self.chat_id).update(
-                username=username,
+            logger.debug(f'User update: telegram_id={self.chat_id} message_from={self.message_from}')
+            self.subscriber_model.objects.select_for_update().filter(telegram_id=self.chat_id).update(
                 telegram_id=self.chat_id,
                 **self.message_from
             )
@@ -58,13 +68,20 @@ class HistoryMixin:
 class CatalogMixin:
     def __init__(self):
         self.catalog_model = products_models.Catalog
+        self.product_model = products_models.Product
+        self.order_model = products_models.Order
+        self.user_model = get_user_model()
         super(CatalogMixin, self).__init__()
 
     def get_product_by_categoty(self, category: str):
         try:
             products = self.catalog_model.objects.get(name=category).product_set.all()
-        except self.catalog_model.DoesNotExist as msg:
-            logger.exception(msg)
+        except self.catalog_model.DoesNotExist:
             products = None
         return products
 
+    def set_product_order(self, chat_id: int, product_id: int):
+        user = self.user_model.objects.get(telegram_id=chat_id)
+        product = self.product_model.objects.get(id=product_id)
+        order = self.order_model(user=user, product=product)
+        order.save()
