@@ -1,5 +1,6 @@
 import logging
 from django.conf import settings
+from django.contrib.auth import get_user_model
 
 from telegrambot import models as telegrambot_models
 from products import models as products_models
@@ -8,10 +9,12 @@ logger = logging.getLogger(__name__)
 
 
 class HistoryMixin:
-    subscriber_model = telegrambot_models.Subscriber
-    request_model = telegrambot_models.Request
-    response_model = telegrambot_models.Response
-    dialog_model = telegrambot_models.Dialog
+    def __init__(self):
+        self.subscriber_model = get_user_model()
+        self.request_model = telegrambot_models.Request
+        self.response_model = telegrambot_models.Response
+        self.dialog_model = telegrambot_models.Dialog
+        super(HistoryMixin, self).__init__()
 
     def run(self, request):
         logger.debug('%s: run()', self.__class__)
@@ -26,14 +29,19 @@ class HistoryMixin:
 
     def subscriber_add(self, request):
         try:
-            subscriber = self.subscriber_model.objects.get(id=self.chat_id)
+            username = self.message_from.get('username', f'telegram_{self.chat_id}')
+            subscriber = self.subscriber_model.objects.get(telegram_id=self.chat_id)
         except self.subscriber_model.DoesNotExist as msg:
             logger.exception(msg)
-            subscriber = self.subscriber_model(**self.message_from)
+            subscriber = self.subscriber_model(**self.message_from, username=username, telegram_id=self.chat_id)
             subscriber.save()
             logger.debug(f'{self.__class__}: Created new subscriber {subscriber}')
         else:
-            self.subscriber_model.objects.select_for_update().filter(id=self.chat_id).update(**self.message_from)
+            self.subscriber_model.objects.select_for_update().filter(id=self.chat_id).update(
+                username=username,
+                telegram_id=self.chat_id,
+                **self.message_from
+            )
             logger.debug(f'{self.__class__}: Updated subscriber {subscriber}')
         return subscriber
 

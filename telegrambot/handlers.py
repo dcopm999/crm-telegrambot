@@ -64,7 +64,6 @@ class HandlerCommandBase(HistoryMixin, AbstractHandler):
         self.bot.send_message(chat_id, self.get_result())
         super(HandlerCommandBase, self).run(request)
 
-    @abstractmethod
     def get_result(self):
         return None
 
@@ -105,6 +104,3 @@ class HandlerProductList(CatalogMixin, HandlerCommandBase):
         else:
             for product in products:
                 self.bot.send_photo(chat_id, product.image.path, product.caption)
-
-    def get_result(self):
-        return None
