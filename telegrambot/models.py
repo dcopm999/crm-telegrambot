@@ -1,28 +1,11 @@
 # -*- coding: utf-8 -*-
 from django.db import models
+from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
-from django.conf import settings
-
-
-class Subscriber(models.Model):
-    id = models.PositiveIntegerField(primary_key=True, verbose_name=_('Subscriber ID'))
-    is_bot = models.BooleanField(verbose_name=_('Is bot'))
-    first_name = models.CharField(max_length=250, verbose_name=_('First name'))
-    username = models.CharField(max_length=250, blank=True, verbose_name=_('User name'))
-    language_code = models.CharField(max_length=7, choices=settings.LANGUAGES, verbose_name=_('Language code'))
-    created = models.DateTimeField(auto_now_add=True, editable=False)
-    edited = models.DateTimeField(auto_now=True, editable=False)
-
-    def __str__(self):
-        return f'{self.first_name}: ({self.id})'
-
-    class Meta:
-        verbose_name = _('Subscriber')
-        verbose_name_plural = _('Subscribers')
 
 
 class Request(models.Model):
-    subscriber = models.ForeignKey(Subscriber, on_delete=models.CASCADE, verbose_name=_('Subscriber'))
+    subscriber = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, verbose_name=_('Subscriber'))
     text = models.TextField(verbose_name=_('Text'))
     created = models.DateTimeField(auto_now_add=True, editable=False)
     edited = models.DateTimeField(auto_now=True, editable=False)
@@ -36,7 +19,7 @@ class Request(models.Model):
 
 
 class Response(models.Model):
-    subscriber = models.ForeignKey(Subscriber, on_delete=models.CASCADE, verbose_name=_('Subscriber'))
+    subscriber = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, verbose_name=_('Subscriber'))
     text = models.TextField(verbose_name=_('Text'))
     created = models.DateTimeField(auto_now_add=True, editable=False)
     edited = models.DateTimeField(auto_now=True, editable=False)
@@ -50,7 +33,7 @@ class Response(models.Model):
 
 
 class Dialog(models.Model):
-    subscriber = models.ForeignKey(Subscriber, on_delete=models.CASCADE, verbose_name=_('Subscriber'))
+    subscriber = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, verbose_name=_('Subscriber'))
     request = models.ForeignKey(Request, on_delete=models.CASCADE, verbose_name=_('Request'))
     response = models.ForeignKey(Response, on_delete=models.CASCADE, verbose_name=_('Response'))
     created = models.DateTimeField(auto_now_add=True, editable=False)
