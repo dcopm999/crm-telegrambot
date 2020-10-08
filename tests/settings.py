@@ -40,7 +40,6 @@ INSTALLED_APPS = [
     "allauth.socialaccount.providers.telegram",
     "allauth.socialaccount.providers.instagram",
     "allauth.socialaccount.providers.vk",
-    "products",
     "telegrambot",
     # if your app has other dependencies that need to be added to the site
     # they should be added here
