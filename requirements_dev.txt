@@ -4,6 +4,7 @@ invoke
 twine
 wheel
 zest.releaser
+ipython>=7.18.1
 
 # pre-commit
 pre-commit==2.7.1
